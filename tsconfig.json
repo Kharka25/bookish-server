@@ -14,7 +14,6 @@
     "paths": {
       // "@/*": ["./src/*"],
       "@controllers/*": ["./src/controllers/*"],
-      "@cloud": ["./src/cloud"],
       "@db": ["./src/db"],
       "@middlewares/*": ["./src/middlewares/*"],
       "@models/*": ["./src/models/*"],
