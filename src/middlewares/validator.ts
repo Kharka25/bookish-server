@@ -4,7 +4,7 @@ import * as yup from 'yup';
 export const validate = (schema: any): RequestHandler => {
 	return async (req, res, next) => {
 		if (!req.body)
-			return res.json({
+			return res.status(422).json({
 				error: 'Incomplete fields. Please provide requested details.',
 			});
 
@@ -12,12 +12,18 @@ export const validate = (schema: any): RequestHandler => {
 			body: schema,
 		});
 
+		let validationErrors: any;
 		try {
-			await schemaToValidate.validate({ body: req.body }, { abortEarly: true });
+			schemaToValidate.validateSync({ body: req.body }, { abortEarly: false });
 			next();
 		} catch (error) {
 			if (error instanceof yup.ValidationError) {
-				res.json({ error: error.message });
+				validationErrors = {};
+				for (const err of error.inner) {
+					const path = err.path!.split('.')[1];
+					validationErrors[path] = err.errors[0] || err.errors[1];
+				}
+				res.status(422).send({ validationErrors });
 			}
 		}
 	};
