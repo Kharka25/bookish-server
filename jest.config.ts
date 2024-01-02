@@ -14,6 +14,7 @@ const config: Config.InitialOptions = {
 		'^@middlewares(.*)$': '<rootDir>/src/middlewares/$1',
 		'^@models(.*)$': '<rootDir>/src/models/$1',
 		'^@routers(.*)$': '<rootDir>/src/routers/$1',
+		'^@types(.*)$': '<rootDir>/src/types/$1',
 		'^@utils(.*)$': '<rootDir>/src/utils/$1',
 	},
 };

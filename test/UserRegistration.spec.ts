@@ -2,15 +2,18 @@ import request from 'supertest';
 
 import server from '../src/server';
 import User from '@models/user';
+import EmailVerification from '@models/emailVerifcation';
 
 beforeEach(async () => {
 	await User.deleteMany({});
+	await EmailVerification.deleteMany({});
 });
 
 interface UserI {
 	username: string | null;
 	email: string | null;
 	password: string;
+	verified?: boolean;
 }
 
 const validUser: UserI = {
@@ -33,6 +36,18 @@ describe('User Registration', () => {
 	it('returns a success message when signup request is successful', async () => {
 		const res = await postUser();
 		expect(res.body.message).toBe('User created!');
+	});
+
+	it('returns response containing a success message and user object when signup request is successful', async () => {
+		const res = await postUser();
+		const body = res.body;
+		expect(Object.keys(body)).toEqual(['message', 'user']);
+	});
+
+	it('responds with correct user object when sign up request is valid and successful', async () => {
+		const res = await postUser();
+		const body = res.body;
+		expect(body.user.email).toBe(validUser.email);
 	});
 
 	// Query database
@@ -58,14 +73,6 @@ describe('User Registration', () => {
 		const savedUser = userList[0];
 
 		expect(savedUser.password).not.toBe('P4ssword!');
-	});
-
-	it('creates user as unverified', async () => {
-		await postUser();
-		const userList = await User.find();
-		const savedUser = userList[0];
-
-		expect(savedUser.verified).toBeFalsy();
 	});
 
 	// Invalid requests
@@ -129,4 +136,49 @@ describe('User Registration', () => {
 			expect(body.validationErrors[field]).toBe(expectedMessage);
 		}
 	);
+
+	// it('returns Email already in use when users email already exists in database', async () => {
+	// 	await User.create({ ...validUser });
+	// 	const res = await postUser(validUser);
+	// 	const body = res.body;
+	// 	expect(body.validationErrors.email).toBe('Email already in use');
+	// });
+
+	it('returns error for null username and invalid email in validationErrors', async () => {
+		await User.create({ ...validUser });
+		const res = await postUser({
+			username: null,
+			email: 'mail.com',
+			password: '!P4ssword_',
+		});
+
+		const body = res.body;
+		expect(Object.keys(body.validationErrors)).toEqual(['username', 'email']);
+	});
+
+	it('creates user as unverified', async () => {
+		await postUser();
+		const userList = await User.find();
+		const savedUser = userList[0];
+
+		expect(savedUser.verified).toBeFalsy();
+	});
+
+	it('creates user as unverified even if request body contains truthy verified value', async () => {
+		await postUser({ ...validUser, verified: true });
+		const userList = await User.find();
+		const savedUser = userList[0];
+		expect(savedUser.verified).toBeFalsy();
+	});
+
+	it('creates activation token for user', async () => {
+		await postUser();
+		const userList = await User.find();
+		const savedUser = userList[0];
+
+		const tokens = await EmailVerification.find();
+		const savedUserToken = tokens[0];
+
+		expect(savedUserToken.owner).toStrictEqual(savedUser._id);
+	});
 });

@@ -7,7 +7,7 @@
 		"build": "tsc && tsc-alias",
 		"dev": "tsnd --respawn -r tsconfig-paths/register --pretty --transpile-only index.ts",
 		"start": "node dist/server.js",
-		"test": "jest",
+		"test": "jest --watch",
 		"lint": "eslint"
 	},
 	"keywords": [],

@@ -15,36 +15,33 @@ interface Methods {
 	comparePassword: (password: string) => Promise<boolean>;
 }
 
-const userSchema = new Schema<UserI, {}, Methods>(
-	{
-		username: {
-			type: String,
-			required: true,
-			trim: true,
-		},
-		email: {
-			type: String,
-			required: true,
-			unique: true,
-		},
-		password: {
-			type: String,
-			required: true,
-		},
-		verified: {
-			type: Boolean,
-			default: false,
-		},
-		avatar: {
-			type: Object,
-			url: String,
-			publicId: String,
-		},
-		favorites: [{ type: Schema.Types.ObjectId, ref: 'Book' }],
-		tokens: [String],
+const userSchema = new Schema<UserI, {}, Methods>({
+	username: {
+		type: String,
+		required: true,
+		trim: true,
 	},
-	{ timestamps: true }
-);
+	email: {
+		type: String,
+		required: true,
+		unique: true,
+	},
+	password: {
+		type: String,
+		required: true,
+	},
+	verified: {
+		type: Boolean,
+		default: false,
+	},
+	avatar: {
+		type: Object,
+		url: String,
+		publicId: String,
+	},
+	favorites: [{ type: Schema.Types.ObjectId, ref: 'Book' }],
+	tokens: [String],
+});
 
 userSchema.pre('save', async function (next) {
 	if (this.isModified('password'))
