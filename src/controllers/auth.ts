@@ -1,4 +1,5 @@
 import { RequestHandler } from 'express';
+import { isValidObjectId } from 'mongoose';
 
 import User from '@models/user';
 import EmailVerifcation from '@models/emailVerifcation';
@@ -54,4 +55,24 @@ export const verifyEmail: RequestHandler = async (
 	await EmailVerifcation.findByIdAndDelete(verificationToken._id);
 
 	res.status(201).json({ message: 'Email verification successful' });
+};
+
+export const resendVerificationToken: RequestHandler = async (req, res) => {
+	const { userId } = req.body;
+
+	if (!isValidObjectId(userId))
+		return res.status(403).json({ error: 'Invalid request' });
+
+	const user = await User.findById(userId);
+
+	if (!user) return res.status(403).json({ error: 'Invalid request' });
+
+	await User.findByIdAndUpdate(userId, { activationToken: null });
+
+	await EmailVerifcation.findOneAndDelete({ owner: userId });
+
+	const token = generateToken(4);
+	await EmailVerifcation.create({ owner: user?._id, token });
+
+	res.status(200).send({ message: 'Please check your email' });
 };

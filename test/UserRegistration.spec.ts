@@ -207,7 +207,7 @@ describe('User Registration', () => {
 		expect(savedUser.verified).toBeFalsy();
 	});
 
-	it('creates activation token for user', async () => {
+	it('creates verification token for user', async () => {
 		await postUser();
 		const userList = await User.find();
 		const savedUser = userList[0];
@@ -221,6 +221,10 @@ describe('User Registration', () => {
 	// Verication email validation
 	it('sends account activation email to user when signup request is valid', async () => {
 		await postUser();
+		const userList = await User.find();
+		const savedUser = userList[0];
+
+		expect(lastMail).toContain(savedUser.activationToken);
 		expect(lastMail).toContain(validUser.email);
 	});
 
@@ -244,8 +248,8 @@ describe('User Registration', () => {
 	});
 });
 
-describe('Account Verification', () => {
-	it('verifies user account when correct activation token is send', async () => {
+describe('Email Verification', () => {
+	it('verifies user account when correct verification token is send', async () => {
 		await postUser();
 		let users = await User.find();
 		const userId = users[0]._id;
@@ -284,13 +288,13 @@ describe('Account Verification', () => {
 		expect(emailToken?.token).toBeFalsy();
 	});
 
-	it('fails email verification when activation token is invalid', async () => {
+	it('fails email verification when verification token is invalid', async () => {
 		await postUser();
 		let users = await User.find();
 		const userId = users[0]._id;
 		const token = 'iNValid-ToKEN';
 
-		const res = await request(server)
+		await request(server)
 			.post(`/api/v1/users/auth/verify-email`)
 			.send({ token, userId });
 
@@ -298,7 +302,7 @@ describe('Account Verification', () => {
 		expect(users[0].verified).toBe(false);
 	});
 
-	it('returns Forbidden request when activation token is invalid', async () => {
+	it('returns Forbidden request when verification token is invalid', async () => {
 		await postUser();
 		let users = await User.find();
 		const userId = users[0]._id;
@@ -310,7 +314,7 @@ describe('Account Verification', () => {
 		expect(res.status).toBe(403);
 	});
 
-	it('returns an error message when activation token is invalid', async () => {
+	it('returns an error message when verification token is invalid', async () => {
 		await postUser();
 		let users = await User.find();
 		const userId = users[0]._id;
@@ -334,5 +338,49 @@ describe('Account Verification', () => {
 
 		expect(res.status).toBe(201);
 		expect(res.body.message).toBe('Email verification successful');
+	});
+});
+
+describe('Retry Email Verification', () => {
+	it('resends email verification token to user upon retry', async () => {
+		await postUser();
+		let users = await User.find();
+		const user = users[0];
+		await request(server)
+			.post(`/api/v1/users/auth/reverify-email`)
+			.send({ userId: user._id });
+
+		expect(lastMail).toContain(user.activationToken);
+	});
+
+	it('returns 403 error status code when email verification token retry is invalid', async () => {
+		await postUser();
+		const res = await request(server)
+			.post(`/api/v1/users/auth/reverify-email`)
+			.send({ userId: 'InVAliD_iD' });
+
+		expect(res.status).toBe(403);
+	});
+
+	it('sends 200 ok response when verification token resend is successful', async () => {
+		await postUser();
+		let users = await User.find();
+		const user = users[0];
+		const res = await request(server)
+			.post(`/api/v1/users/auth/reverify-email`)
+			.send({ userId: user._id });
+
+		expect(res.status).toBe(200);
+	});
+
+	it('sends message response for use to check email for new token', async () => {
+		await postUser();
+		let users = await User.find();
+		const user = users[0];
+		const res = await request(server)
+			.post(`/api/v1/users/auth/reverify-email`)
+			.send({ userId: user._id });
+
+		expect(res.body.message).toBe('Please check your email');
 	});
 });
