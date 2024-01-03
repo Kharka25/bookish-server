@@ -1,1 +1,1 @@
-export { SignUpRequest, SignInRequest } from './user';
+export { SignUpRequest, SignInRequest, VerifyEmailRequest } from './user';

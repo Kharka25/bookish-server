@@ -1,4 +1,5 @@
 import * as yup from 'yup';
+import { isValidObjectId } from 'mongoose';
 
 import User from '@models/user';
 
@@ -53,4 +54,16 @@ export const CreateUserSchema = yup.object().shape({
 			/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/,
 			'Password must contain at least 1 uppercase, 1 lowercase, a number and a special character'
 		),
+});
+
+export const TokenAndIdValidationSchema = yup.object().shape({
+	token: yup.string().trim().required('Invalid Token'),
+	userId: yup
+		.string()
+		.transform(function (value) {
+			if (this.isType(value) && isValidObjectId(value)) return value;
+
+			return '';
+		})
+		.required('Invalid userId'),
 });

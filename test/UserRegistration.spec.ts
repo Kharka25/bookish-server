@@ -1,10 +1,44 @@
 import request from 'supertest';
+import { SMTPServer } from 'smtp-server';
 
 import server from '../src/server';
 import User from '@models/user';
 import EmailVerification from '@models/emailVerifcation';
 
+let lastMail: string, mailServer: SMTPServer;
+let simulateSmtpFailure = false;
+
+beforeAll(async () => {
+	mailServer = new SMTPServer({
+		authOptional: true,
+		onData(stream, session, callback) {
+			let mailBody = '';
+			stream.on('data', (data) => {
+				mailBody += data.toString();
+			});
+
+			stream.on('end', () => {
+				if (simulateSmtpFailure) {
+					const err = new Error('Invalid mailbox');
+					return callback(err);
+				}
+				lastMail = mailBody;
+				callback();
+			});
+		},
+	});
+
+	mailServer.listen(8587, 'localhost');
+});
+
+afterAll(() => {
+	mailServer.close();
+	jest.setTimeout(5000);
+});
+
 beforeEach(async () => {
+	simulateSmtpFailure = false;
+
 	await User.deleteMany({});
 	await EmailVerification.deleteMany({});
 });
@@ -25,6 +59,8 @@ const validUser: UserI = {
 const postUser = (user = validUser) => {
 	return request(server).post('/api/v1/users/auth/signup').send(user);
 };
+
+jest.useRealTimers();
 
 describe('User Registration', () => {
 	// Validate endpoint being reached
@@ -180,5 +216,123 @@ describe('User Registration', () => {
 		const savedUserToken = tokens[0];
 
 		expect(savedUserToken.owner).toStrictEqual(savedUser._id);
+	});
+
+	// Verication email validation
+	it('sends account activation email to user when signup request is valid', async () => {
+		await postUser();
+		expect(lastMail).toContain(validUser.email);
+	});
+
+	it('returns 502 Bad Gateway when sending account activation email fails', async () => {
+		simulateSmtpFailure = true;
+		const res = await postUser();
+		expect(res.status).toBe(502);
+	});
+
+	it('returns Email failure message when sending account activation email fails', async () => {
+		simulateSmtpFailure = true;
+		const res = await postUser();
+		expect(res.body.message).toBe('Account Activation Email failure');
+	});
+
+	it('does not save user to database if sending account activation email fails', async () => {
+		simulateSmtpFailure = true;
+		await postUser();
+		const userList = await User.find();
+		expect(userList.length).toBe(0);
+	});
+});
+
+describe('Account Verification', () => {
+	it('verifies user account when correct activation token is send', async () => {
+		await postUser();
+		let users = await User.find();
+		const userId = users[0]._id;
+		const token = users[0].activationToken;
+		await request(server)
+			.post(`/api/v1/users/auth/verify-email`)
+			.send({ token, userId });
+
+		users = await User.find();
+		expect(users[0].verified).toBe(true);
+	});
+
+	it('removes activation token from db when user email verification is successful', async () => {
+		await postUser();
+		let users = await User.find();
+		const userId = users[0]._id;
+		const token = users[0].activationToken;
+		await request(server)
+			.post(`/api/v1/users/auth/verify-email`)
+			.send({ token, userId });
+
+		users = await User.find();
+		expect(users[0].activationToken).toBeNull();
+	});
+
+	it('removes email activation token from db when user email verification is successful', async () => {
+		await postUser();
+		let users = await User.find();
+		const userId = users[0]._id;
+		const token = users[0].activationToken;
+		await request(server)
+			.post(`/api/v1/users/auth/verify-email`)
+			.send({ token, userId });
+
+		const emailToken = await EmailVerification.findOne({ owner: userId });
+		expect(emailToken?.token).toBeFalsy();
+	});
+
+	it('fails email verification when activation token is invalid', async () => {
+		await postUser();
+		let users = await User.find();
+		const userId = users[0]._id;
+		const token = 'iNValid-ToKEN';
+
+		const res = await request(server)
+			.post(`/api/v1/users/auth/verify-email`)
+			.send({ token, userId });
+
+		users = await User.find();
+		expect(users[0].verified).toBe(false);
+	});
+
+	it('returns Forbidden request when activation token is invalid', async () => {
+		await postUser();
+		let users = await User.find();
+		const userId = users[0]._id;
+		const token = 'iNValid-ToKEN';
+
+		const res = await request(server)
+			.post(`/api/v1/users/auth/verify-email`)
+			.send({ token, userId });
+		expect(res.status).toBe(403);
+	});
+
+	it('returns an error message when activation token is invalid', async () => {
+		await postUser();
+		let users = await User.find();
+		const userId = users[0]._id;
+		const token = 'iNValid-ToKEN';
+
+		const res = await request(server)
+			.post(`/api/v1/users/auth/verify-email`)
+			.send({ token, userId });
+
+		expect(res.body.error).toBe('Invalid token');
+	});
+
+	it('returns 201 status and success message when token is valid and email verification was successful', async () => {
+		await postUser();
+		let users = await User.find();
+		const userId = users[0]._id;
+		const token = users[0].activationToken;
+		const res = await request(server)
+			.post(`/api/v1/users/auth/verify-email`)
+			.send({ token, userId });
+
+		expect(res.status).toBe(201);
+		expect(res.body.message).toBe('Email verification successful');
 	});
 });

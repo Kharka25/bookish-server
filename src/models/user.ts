@@ -2,6 +2,7 @@ import { ObjectId, model, Model, Schema } from 'mongoose';
 import { compare, hash } from 'bcrypt';
 
 interface UserI {
+	activationToken: string;
 	username: string;
 	email: string;
 	password: string;
@@ -16,6 +17,10 @@ interface Methods {
 }
 
 const userSchema = new Schema<UserI, {}, Methods>({
+	activationToken: {
+		type: String,
+		trim: true,
+	},
 	username: {
 		type: String,
 		required: true,

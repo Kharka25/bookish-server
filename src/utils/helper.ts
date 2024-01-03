@@ -1,4 +1,6 @@
-export function generateToken(length = 6) {
+import { transporter } from '@config/emailTransporter';
+
+function generateToken(length = 6) {
 	let otp = '';
 
 	for (let i = 0; i < length; i++) {
@@ -8,3 +10,14 @@ export function generateToken(length = 6) {
 
 	return otp;
 }
+
+async function sendAccountActivationEmail(email: string, token: string) {
+	await transporter.sendMail({
+		from: 'Bookish <info@bookish.com',
+		html: `Activation token is ${token}`,
+		subject: 'Account activation',
+		to: email,
+	});
+}
+
+export { generateToken, sendAccountActivationEmail };

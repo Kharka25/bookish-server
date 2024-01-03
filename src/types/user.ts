@@ -5,13 +5,12 @@ declare global {
 		interface Request {
 			user: {
 				id: any;
+				activationToken: string;
 				avatar?: string;
 				email: string;
-				firstName: string;
-				lastName: string;
-				followers: number;
-				followings: number;
+				favorites: string[];
 				verified: boolean;
+				username: string;
 			};
 			token: string;
 		}
@@ -33,4 +32,11 @@ interface SignInRequest extends Request {
 	};
 }
 
-export { SignUpRequest, SignInRequest };
+interface VerifyEmailRequest extends Request {
+	body: {
+		token: string;
+		userId: string;
+	};
+}
+
+export { SignUpRequest, SignInRequest, VerifyEmailRequest };

@@ -7,8 +7,13 @@ const config: Config.InitialOptions = {
 	testRegex: '/test/.*spec\\.(jsx?|tsx?)$',
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
 	setupFilesAfterEnv: ['<rootDir>/src/setupFilesAfterEnv.ts'],
+	watchPlugins: [
+		'jest-watch-typeahead/filename',
+		'jest-watch-typeahead/testname',
+	],
 	moduleNameMapper: {
 		'^@src/(.*)': '<rootDir>/src/$1',
+		'^@config(.*)$': '<rootDir>/src/config/$1',
 		'^@controllers(.*)$': '<rootDir>/src/controllers/$1',
 		'^@db(.*)$': '<rootDir>/src/db/$1',
 		'^@middlewares(.*)$': '<rootDir>/src/middlewares/$1',
