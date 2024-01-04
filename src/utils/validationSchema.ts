@@ -67,3 +67,15 @@ export const TokenAndIdValidationSchema = yup.object().shape({
 		})
 		.required('Invalid userId'),
 });
+
+export const PasswordAndIDValidationSchema = yup.object().shape({
+	password: yup.string().trim().required('Invalid Password'),
+	userId: yup
+		.string()
+		.transform(function (value) {
+			if (this.isType(value) && isValidObjectId(value)) return value;
+
+			return '';
+		})
+		.required('Invalid userId'),
+});

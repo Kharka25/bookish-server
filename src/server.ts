@@ -11,4 +11,6 @@ server.use(express.urlencoded({ extended: false }));
 
 server.use('/api/v1/users/auth', authRouter);
 
+console.log('env: ', process.env.NODE_ENV);
+
 export default server;

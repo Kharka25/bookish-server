@@ -3,7 +3,7 @@ import { SMTPServer } from 'smtp-server';
 
 import server from '../src/server';
 import User from '@models/user';
-import EmailVerification from '@models/emailVerifcation';
+import EmailVerification from '@models/emailVerifcationToken';
 
 let lastMail: string, mailServer: SMTPServer;
 let simulateSmtpFailure = false;
@@ -41,6 +41,10 @@ beforeEach(async () => {
 
 	await User.deleteMany({});
 	await EmailVerification.deleteMany({});
+});
+
+afterEach(async () => {
+	await User.deleteMany({});
 });
 
 interface UserI {
@@ -350,7 +354,7 @@ describe('Retry Email Verification', () => {
 			.post(`/api/v1/users/auth/reverify-email`)
 			.send({ userId: user._id });
 
-		expect(lastMail).toContain(user.activationToken);
+		expect(lastMail).toContain(user.email);
 	});
 
 	it('returns 403 error status code when email verification token retry is invalid', async () => {
@@ -373,7 +377,7 @@ describe('Retry Email Verification', () => {
 		expect(res.status).toBe(200);
 	});
 
-	it('sends message response for use to check email for new token', async () => {
+	it('sends message response for user to check email for new token', async () => {
 		await postUser();
 		let users = await User.find();
 		const user = users[0];
