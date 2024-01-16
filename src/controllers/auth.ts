@@ -7,6 +7,7 @@ import EmailVerifcationToken from '@models/emailVerifcationToken';
 import PasswordResetToken from '@models/passwordResetToken';
 import { SignUpRequest, VerifyEmailRequest } from '@types';
 import {
+	createJwtToken,
 	generateToken,
 	sendAccountActivationEmail,
 	sendPasswordResetLink,
@@ -128,4 +129,31 @@ export const updatePasswword: RequestHandler = async (req, res) => {
 	await PasswordResetToken.findOneAndDelete({ owner: user._id });
 
 	res.status(200).send({ message: 'Your password has been updated' });
+};
+
+export const signin: RequestHandler = async (req, res) => {
+	const { email, password } = req.body;
+
+	const user = await User.findOne({ email });
+
+	if (!user) return res.status(401).json({ error: 'Invalid email/password' });
+
+	const matched = await user.comparePassword(password);
+	if (!matched)
+		return res.status(401).json({ error: 'Invalid email/password' });
+
+	const token = createJwtToken(user._id);
+	user.tokens.push(token);
+
+	await user.save();
+
+	res.status(200).json({
+		profile: {
+			id: user._id,
+			username: user?.username,
+			email: user?.email,
+			verified: user?.verified,
+		},
+		token,
+	});
 };

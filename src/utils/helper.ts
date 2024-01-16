@@ -1,4 +1,9 @@
+import { Schema, Types } from 'mongoose';
+import jwt from 'jsonwebtoken';
+
 import { transporter, transporterTest } from '@config/emailTransporter';
+import User from '@models/user';
+import { JWT_SECRET } from './variables';
 
 const env = process.env.NODE_ENV;
 
@@ -45,4 +50,13 @@ async function sendPasswordResetLink(email: string, link: string) {
 			});
 }
 
-export { generateToken, sendPasswordResetLink, sendAccountActivationEmail };
+function createJwtToken(userId: Types.ObjectId) {
+	return jwt.sign({ userId }, JWT_SECRET);
+}
+
+export {
+	createJwtToken,
+	generateToken,
+	sendPasswordResetLink,
+	sendAccountActivationEmail,
+};

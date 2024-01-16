@@ -79,3 +79,12 @@ export const PasswordAndIDValidationSchema = yup.object().shape({
 		})
 		.required('Invalid userId'),
 });
+
+export const SigninValidationSchema = yup.object().shape({
+	email: yup
+		.string()
+		.trim()
+		.required('Email is required')
+		.email('Invalid email!'),
+	password: yup.string().trim().required('Password is required'),
+});
