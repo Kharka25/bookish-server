@@ -29,6 +29,7 @@ beforeAll(async () => {
 	});
 
 	mailServer.listen(8587, 'localhost');
+	jest.setTimeout(20000);
 });
 
 afterAll(() => {

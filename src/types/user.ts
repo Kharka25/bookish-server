@@ -5,10 +5,10 @@ declare global {
 		interface Request {
 			user: {
 				id: any;
-				activationToken: string;
+				activationToken?: string;
 				avatar?: string;
 				email: string;
-				favorites: string[];
+				favorites?: string[];
 				verified: boolean;
 				username: string;
 			};

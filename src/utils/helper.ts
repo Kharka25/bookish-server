@@ -2,7 +2,7 @@ import { Schema, Types } from 'mongoose';
 import jwt from 'jsonwebtoken';
 
 import { transporter, transporterTest } from '@config/emailTransporter';
-import User from '@models/user';
+import User, { UserI } from '@models/user';
 import { JWT_SECRET } from './variables';
 
 const env = process.env.NODE_ENV;
@@ -50,13 +50,30 @@ async function sendPasswordResetLink(email: string, link: string) {
 			});
 }
 
-function createJwtToken(userId: Types.ObjectId) {
+function createJwtToken(userId: Schema.Types.ObjectId) {
 	return jwt.sign({ userId }, JWT_SECRET);
+}
+
+function verifyJwtToken(token: string) {
+	return jwt.verify(token, JWT_SECRET);
+}
+
+function formatUserProfile(user: UserI) {
+	return {
+		id: user._id,
+		username: user.username,
+		email: user.email,
+		verified: user.verified,
+		avatar: user.avatar?.url,
+		favorites: user.favorites,
+	};
 }
 
 export {
 	createJwtToken,
+	formatUserProfile,
 	generateToken,
 	sendPasswordResetLink,
 	sendAccountActivationEmail,
+	verifyJwtToken,
 };

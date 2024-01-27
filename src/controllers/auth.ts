@@ -1,6 +1,7 @@
 import { RequestHandler } from 'express';
 import { isValidObjectId } from 'mongoose';
 import crypto from 'crypto';
+import { JwtPayload, verify } from 'jsonwebtoken';
 
 import User from '@models/user';
 import EmailVerifcationToken from '@models/emailVerifcationToken';
@@ -8,13 +9,14 @@ import PasswordResetToken from '@models/passwordResetToken';
 import { SignUpRequest, VerifyEmailRequest } from '@types';
 import {
 	createJwtToken,
+	formatUserProfile,
 	generateToken,
 	sendAccountActivationEmail,
 	sendPasswordResetLink,
 } from '@utils/helper';
-import { PASSWORD_RESET_LINK } from '@utils/variables';
+import { JWT_SECRET, PASSWORD_RESET_LINK } from '@utils/variables';
 
-export const signup: RequestHandler = async (req: SignUpRequest, res) => {
+export const signUp: RequestHandler = async (req: SignUpRequest, res) => {
 	const { username, email, password } = req.body;
 
 	const token = generateToken(4);
@@ -131,7 +133,7 @@ export const updatePasswword: RequestHandler = async (req, res) => {
 	res.status(200).send({ message: 'Your password has been updated' });
 };
 
-export const signin: RequestHandler = async (req, res) => {
+export const signIn: RequestHandler = async (req, res) => {
 	const { email, password } = req.body;
 
 	const user = await User.findOne({ email });
@@ -156,4 +158,19 @@ export const signin: RequestHandler = async (req, res) => {
 		},
 		token,
 	});
+};
+
+export const updateProfile: RequestHandler = async (req, res) => {
+	const { email, username } = req.body;
+	const user = await User.findById(req.user.id);
+	if (!user)
+		return res
+			.status(404)
+			.json({ error: 'Something went wrong, user not found' });
+
+	user.username = username;
+	// user.email = email;
+
+	await user.save();
+	res.json({ profile: formatUserProfile(user) });
 };

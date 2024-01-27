@@ -3,6 +3,11 @@ import { isValidObjectId } from 'mongoose';
 
 import User from '@models/user';
 
+type UserUpate = {
+	email?: string;
+	username?: string;
+};
+
 function checkUniqueEmail(email: string | undefined) {
 	return new Promise(async (resolve, reject) => {
 		let isUniqueEmail;
@@ -88,3 +93,14 @@ export const SigninValidationSchema = yup.object().shape({
 		.email('Invalid email!'),
 	password: yup.string().trim().required('Password is required'),
 });
+
+export const UserUpdateValidationSchema: yup.Schema<UserUpate> = yup
+	.object()
+	.shape({
+		email: yup.string().trim().email('Invalid email!'),
+		username: yup
+			.string()
+			.trim()
+			.min(3, 'Name should have a min of 3 and max of 20 characters')
+			.max(20, 'Name should have a min of 3 and max of 20 characters'),
+	});
