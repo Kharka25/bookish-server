@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import {
+  getProfile,
   resetPassword,
   resendVerificationToken,
   signIn,
@@ -37,6 +38,7 @@ router.put(
   updatePasswword
 );
 router.post('/signin', validate(SigninValidationSchema), signIn);
+router.get('/is-auth', validateAuth, getProfile);
 router.put('/update-profile', validateAuth, updateProfile);
 
 export default router;

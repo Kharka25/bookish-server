@@ -160,6 +160,10 @@ export const signIn: RequestHandler = async (req, res) => {
   });
 };
 
+export const getProfile: RequestHandler = async (req, res) => {
+  res.status(200).json({ profile: req.user });
+};
+
 export const updateProfile: RequestHandler = async (req, res) => {
   const { email, username } = req.body;
   const user = await User.findById(req.user.id);
