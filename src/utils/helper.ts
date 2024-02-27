@@ -66,6 +66,7 @@ function formatUserProfile(user: UserI) {
     verified: user.verified,
     avatar: user.avatar?.url,
     favorites: user.favorites,
+    userType: user.userType,
   };
 }
 
