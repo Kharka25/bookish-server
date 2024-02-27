@@ -29,7 +29,7 @@ export const validateAuth: RequestHandler = async (req, res, next) => {
 	const token = authorization?.split('Bearer ')[1];
 	if (!token) return res.status(403).send({ error: 'Unauthorized request!' });
 
-	const payload = (await verifyJwtToken(token)) as JwtPayload;
+	const payload = verifyJwtToken(token) as JwtPayload;
 	const id = payload.userId;
 
 	const user = await User.findOne({ _id: id, tokens: token });
@@ -42,6 +42,8 @@ export const validateAuth: RequestHandler = async (req, res, next) => {
 		verified: user.verified,
 		username: user.username,
 	};
+
+	req.token = token;
 
 	next();
 };
