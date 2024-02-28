@@ -53,7 +53,7 @@ interface UserI {
   email: string | null;
   password: string;
   verified?: boolean;
-  userType: string;
+  userType: 'user' | 'author';
 }
 
 const validUser: UserI = {
@@ -193,6 +193,14 @@ describe('User Registration', () => {
 
     const body = res.body;
     expect(Object.keys(body.validationErrors)).toEqual(['username', 'email']);
+  });
+
+  it('creates user as an author', async () => {
+    await postUser({ ...validUser, userType: 'author' });
+    const userList = await User.find();
+    const savedUser = userList[0];
+
+    expect(savedUser.userType).toBe('author');
   });
 
   it('creates user as unverified', async () => {
