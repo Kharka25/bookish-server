@@ -1,7 +1,7 @@
 import request from 'supertest';
 
 import server from '../src/server';
-import User from '@models/user';
+import { User } from '@models';
 import { ObjectId } from 'mongoose';
 
 beforeEach(async () => {

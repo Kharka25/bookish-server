@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 
-import User from '@models/user';
+import { User } from '@models';
 
 export const getAuthorProfile: RequestHandler = async (req, res) => {
   const { authorId } = req.params;
@@ -22,4 +22,15 @@ export const getAuthorProfile: RequestHandler = async (req, res) => {
       userType: user.userType,
     },
   });
+};
+
+export const updateAuthorProfile: RequestHandler = async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ error: 'Invalid user' });
+
+  if (user.userType !== 'author')
+    return res
+      .status(403)
+      .json({ error: 'Invalid request, invalid userType/profile!' });
+  res.send();
 };

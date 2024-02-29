@@ -1,7 +1,7 @@
 import request from 'supertest';
 
 import server from '../src/server';
-import User from '@models/user';
+import { User } from '@models';
 
 beforeEach(async () => {
   await User.deleteMany({});
@@ -9,6 +9,10 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await User.deleteMany({});
+});
+
+beforeAll(async () => {
+  jest.setTimeout(5000);
 });
 
 interface authUserI {

@@ -2,8 +2,7 @@ import request from 'supertest';
 import { SMTPServer } from 'smtp-server';
 
 import server from '../src/server';
-import User from '@models/user';
-import EmailVerification from '@models/emailVerifcationToken';
+import { Author, EmailVerificationToken, User } from '@models';
 
 let lastMail: string, mailServer: SMTPServer;
 let simulateSmtpFailure = false;
@@ -28,24 +27,28 @@ beforeAll(async () => {
     },
   });
 
+  jest.setTimeout(10000);
   mailServer.listen(8587, 'localhost');
-  jest.setTimeout(20000);
+  await User.deleteMany({});
 });
 
-afterAll(() => {
+afterAll(async () => {
   mailServer.close();
+
   jest.setTimeout(5000);
 });
 
 beforeEach(async () => {
   simulateSmtpFailure = false;
 
+  await Author.deleteMany({});
+  await EmailVerificationToken.deleteMany({});
   await User.deleteMany({});
-  await EmailVerification.deleteMany({});
 });
 
 afterEach(async () => {
-  await User.deleteMany({});
+  // await User.deleteMany({});
+  await Author.deleteMany({});
 });
 
 interface UserI {
@@ -203,6 +206,17 @@ describe('User Registration', () => {
     expect(savedUser.userType).toBe('author');
   });
 
+  it('creates an author profile for user when userType is author', async () => {
+    await postUser({ ...validUser, userType: 'author' });
+    const userList = await User.find();
+    const savedUser = userList[0];
+
+    const authorList = await Author.find();
+    const savedAuthor = authorList[0];
+
+    expect(savedAuthor.authorId).toEqual(savedUser._id);
+  });
+
   it('creates user as unverified', async () => {
     await postUser();
     const userList = await User.find();
@@ -223,7 +237,7 @@ describe('User Registration', () => {
     const userList = await User.find();
     const savedUser = userList[0];
 
-    const tokens = await EmailVerification.find();
+    const tokens = await EmailVerificationToken.find();
     const savedUserToken = tokens[0];
 
     expect(savedUserToken.owner).toStrictEqual(savedUser._id);
@@ -295,7 +309,7 @@ describe('Email Verification', () => {
       .post(`/api/v1/users/auth/verify-email`)
       .send({ token, userId });
 
-    const emailToken = await EmailVerification.findOne({ owner: userId });
+    const emailToken = await EmailVerificationToken.findOne({ owner: userId });
     expect(emailToken?.token).toBeFalsy();
   });
 
