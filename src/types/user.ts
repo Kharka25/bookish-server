@@ -20,6 +20,7 @@ declare global {
 
 interface SignUpRequest extends Request {
   body: {
+    bio?: string;
     email: string;
     password: string;
     username: string;
