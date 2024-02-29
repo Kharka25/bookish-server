@@ -32,20 +32,19 @@ export const signUp: RequestHandler = async (req: SignUpRequest, res) => {
     activationToken: token,
   });
 
-  if (userType === 'author') {
-    const newAuthorUser = await Author.create({
-      authorId: user._id,
-      bio,
-      products: [],
-      rating: 0,
-    });
-    await newAuthorUser.save();
-  }
-
   await EmailVerificationToken.create({ owner: user._id, token });
 
   try {
     await sendAccountActivationEmail(email, token);
+    if (user.userType === 'author') {
+      const newAuthorUser = await Author.create({
+        authorId: user._id,
+        bio,
+        products: [],
+        rating: 0,
+      });
+      await newAuthorUser.save();
+    }
 
     res.status(201).json({
       message: 'User created!',
