@@ -2,7 +2,7 @@ import { Schema } from 'mongoose';
 import jwt from 'jsonwebtoken';
 
 import { transporter, transporterTest } from '@config/emailTransporter';
-import { UserI } from '@models/user';
+import { UserI } from '@models';
 import { JWT_SECRET } from './variables';
 
 const env = process.env.NODE_ENV;
