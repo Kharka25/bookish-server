@@ -2,9 +2,12 @@ import { RequestHandler } from 'express';
 import { isValidObjectId } from 'mongoose';
 import crypto from 'crypto';
 
-import User from '@models/user';
-import EmailVerifcationToken from '@models/emailVerifcationToken';
-import PasswordResetToken from '@models/passwordResetToken';
+import {
+  Author,
+  EmailVerificationToken,
+  PasswordResetToken,
+  User,
+} from '@models';
 import { SignUpRequest, VerifyEmailRequest } from '@types';
 import {
   createJwtToken,
@@ -17,7 +20,7 @@ import {
 import { PASSWORD_RESET_LINK } from '@utils/variables';
 
 export const signUp: RequestHandler = async (req: SignUpRequest, res) => {
-  const { username, email, userType, password } = req.body;
+  const { bio, username, email, userType, password } = req.body;
 
   const token = generateToken(4);
 
@@ -29,10 +32,19 @@ export const signUp: RequestHandler = async (req: SignUpRequest, res) => {
     activationToken: token,
   });
 
-  await EmailVerifcationToken.create({ owner: user._id, token });
+  await EmailVerificationToken.create({ owner: user._id, token });
 
   try {
     await sendAccountActivationEmail(email, token);
+    if (user.userType === 'author') {
+      const newAuthorUser = await Author.create({
+        authorId: user._id,
+        bio,
+        products: [],
+        rating: 0,
+      });
+      await newAuthorUser.save();
+    }
 
     res.status(201).json({
       message: 'User created!',
@@ -50,7 +62,7 @@ export const verifyEmail: RequestHandler = async (
 ) => {
   const { token, userId } = req.body;
 
-  const verificationToken = await EmailVerifcationToken.findOne({
+  const verificationToken = await EmailVerificationToken.findOne({
     owner: userId,
   });
   if (!verificationToken)
@@ -64,7 +76,7 @@ export const verifyEmail: RequestHandler = async (
     activationToken: null,
   });
 
-  await EmailVerifcationToken.findByIdAndDelete(verificationToken._id);
+  await EmailVerificationToken.findByIdAndDelete(verificationToken._id);
 
   res.status(201).json({ message: 'Email verification successful' });
 };
@@ -81,10 +93,10 @@ export const resendVerificationToken: RequestHandler = async (req, res) => {
 
   await User.findByIdAndUpdate(userId, { activationToken: null });
 
-  await EmailVerifcationToken.findOneAndDelete({ owner: userId });
+  await EmailVerificationToken.findOneAndDelete({ owner: userId });
 
   const token = generateToken(4);
-  await EmailVerifcationToken.create({ owner: userId, token });
+  await EmailVerificationToken.create({ owner: userId, token });
 
   try {
     await sendAccountActivationEmail(user.email, token);

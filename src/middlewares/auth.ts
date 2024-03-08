@@ -1,8 +1,7 @@
 import { RequestHandler } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 
-import PasswordResetToken from '@models/passwordResetToken';
-import User from '@models/user';
+import { PasswordResetToken, User } from '@models';
 import { verifyJwtToken } from '@utils/helper';
 
 export const validatePasswordResetToken: RequestHandler = async (

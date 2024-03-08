@@ -2,7 +2,7 @@ import { Schema } from 'mongoose';
 import jwt from 'jsonwebtoken';
 
 import { transporter, transporterTest } from '@config/emailTransporter';
-import { UserI } from '@models/user';
+import { UserI } from '@models';
 import { JWT_SECRET } from './variables';
 
 const env = process.env.NODE_ENV;
@@ -19,7 +19,7 @@ function generateToken(length = 6) {
 }
 
 async function sendAccountActivationEmail(email: string, token: string) {
-  env === 'test'
+  env !== 'development'
     ? await transporterTest.sendMail({
         from: 'Bookish <auth@bookish.com',
         html: `Activation token is ${token}`,
@@ -35,7 +35,7 @@ async function sendAccountActivationEmail(email: string, token: string) {
 }
 
 async function sendPasswordResetLink(email: string, link: string) {
-  env === 'test'
+  env !== 'development'
     ? await transporterTest.sendMail({
         from: 'Bookish <auth@bookish.com',
         html: `Click the link to reset your password ${link}`,
